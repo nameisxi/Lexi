@@ -1,0 +1,2 @@
+# Lexi
+Sentiment lexicon creator
