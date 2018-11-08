@@ -95,8 +95,38 @@ class SentimentLexiconCreator:
 #sc.py
 
 class SentimentClassifier():
+    def __init__(self, words, lexicon):
+        self.words = words
+        self.lexicon = lexicon
+
+    def get_words(self, text):
+        words = []
+        text = text.replace('!', '.')
+        text = text.replace('?', '.')
+        text = text.replace('\n', '.')
+        text = text.replace('-', '.')
+        text = text.replace(',', '.')
+        sentences = text.split('.')
+        for sentence in sentences:
+            words = sentence.split(' ')
+            for word in words:
+                words.append(word.lower())
+        return words
+
     def classify(self, text):
-        pass
+        words = self.get_words(text)
+        score = 0
+        for i in range(len(words)):
+            word = words[i]
+            if word in self.words:
+                lexicon_score = self.lexicon[words.index(word)]
+                if lexicon_score != 'undefined':
+                    score += lexicon_score
+        if score > 0:
+            return 'Positive'
+        elif score < 0:
+            return 'Negative'
+        return 'Neutral'
 
 #######################################################################################################################
 
@@ -198,8 +228,8 @@ def main():
     print('Sentiment lexicon done')
     print('-----------------------')
 
-    #classify_or_not = input('Do you want to classify texts after creating the lexicon? [y/n]: ').strip().lower()
-    classify_or_not = 'n'
+    classify_or_not = input('Do you want to classify texts after creating the lexicon? [y/n]: ').strip().lower()
+    #classify_or_not = 'n'
     if classify_or_not == 'y':
         text = None
         run = True
@@ -209,9 +239,9 @@ def main():
                 help()
                 continue
             run = False
-        sc = SentimentClassifier()
-        result = sc.classify(text)
-        print('Result : test')
+        sc = SentimentClassifier(words, lexicons)
+        sentiment = sc.classify(text)
+        print('Sentiment:', sentiment)
 
     save_or_not = input('Do you want to save the created lexicon? [y/n]: ').strip().lower()
     if save_or_not == 'y':    
