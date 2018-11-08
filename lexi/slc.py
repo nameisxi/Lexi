@@ -1,12 +1,8 @@
 import numpy as np
-import pandas as pd
-import os
-
 
 class SentimentLexiconCreator:
     def __init__(self):
         self.nothing = None
-
         
     def classify_text(self, text, positive_rating_limit, negative_rating_limit):
         positive_reviews = []
