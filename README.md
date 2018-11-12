@@ -11,6 +11,14 @@ foo@bar:~$ ls
 Lexi
 ```
 #### How to use Lexi:
+0. Your dataset has to be in CSV format with atleast two columns. 
+   The first two columns need to have the following structure:
+   
+| text_data | rating_data |
+| --------- | ----------- |
+| This is an example | 3 |
+| This also is and example | 7 |
+
 1. Either clone this project to the same directory where your file to be used is located at,
    or just move that file to the same directory where you cloned Lexi to. 
    
