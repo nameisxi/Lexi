@@ -1,5 +1,5 @@
 import os
-
+import time
 import numpy as np
 import pandas as pd
 
@@ -100,7 +100,7 @@ class SentimentClassifier():
         self.lexicon = lexicon
 
     def get_words(self, text):
-        words = []
+        results = []
         text = text.replace('!', '.')
         text = text.replace('?', '.')
         text = text.replace('\n', '.')
@@ -110,16 +110,16 @@ class SentimentClassifier():
         for sentence in sentences:
             words = sentence.split(' ')
             for word in words:
-                words.append(word.lower())
-        return words
+                results.append(word.lower())
+        return results
 
     def classify(self, text):
-        words = self.get_words(text)
+        input_words = self.get_words(text)
+        print("words are here")
         score = 0
-        for i in range(len(words)):
-            word = words[i]
+        for word in input_words:
             if word in self.words:
-                lexicon_score = self.lexicon[words.index(word)]
+                lexicon_score = self.lexicon[input_words.index(word)]
                 if lexicon_score != 'undefined':
                     score += lexicon_score
         if score > 0:
