@@ -247,7 +247,7 @@ def main():
     if save_or_not == 'y':    
         file_name = input('File name for the created lexicon: ')
         file_name = parse_file_name(file_name)
-        output = pd.DataFrame({'word': words, 'lexicon': lexicons})
+        output = pd.DataFrame({'word': words, 'score': lexicons})
         output.to_csv(current_directory + file_name, index=False)
         print(f'File "{file_name}" has been saved to "{current_directory}"')
         return
