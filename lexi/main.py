@@ -1,20 +1,24 @@
 import os
-import time
+
 import numpy as np
 import pandas as pd
-
-#from .slc import SentimentLexiconCreator
-
-#######################################################################################################################
-#slc.py
+from docutils.parsers.rst.directives import percentage
 
 
 class SentimentLexiconCreator:
+    def print_status(self, i, length, string, percentage=True):
+        if percentage:
+            output_string = f'        {string}: {int(((i + 1) / length) * 100)}%'
+        else:
+            output_string = f'        {string}'
+        print(output_string, end="\r")
+
+
     def classify_text(self, text, positive_rating_limit, negative_rating_limit):
-        positive_reviews = []
-        neutral_reviews = []
-        negative_reviews = []
-        for i in range(len(text)):
+        length = len(text)
+        positive_reviews, neutral_reviews, negative_reviews = [], [], []
+        for i in range(length):
+            self.print_status(i, length, 'Classifying reviews')
             if text.iloc[i, 1] > positive_rating_limit:
                 positive_reviews.append(text.iloc[i, 0])
             elif text.iloc[i, 1] < negative_rating_limit:
@@ -23,112 +27,189 @@ class SentimentLexiconCreator:
                 neutral_reviews.append(text.iloc[i, 0])
         return positive_reviews, neutral_reviews, negative_reviews
 
-    def get_words(self, texts, minimum_word_frequency):
-        word_counts = dict()
-        for text in texts:
-            text = text.replace('!', '.')
-            text = text.replace('?', '.')
-            text = text.replace('\n', '.')
-            text = text.replace('-', '.')
-            text = text.replace(',', '.')
-            sentences = text.split('.')
-            for sentence in sentences:
-                words = sentence.split(' ')
-                for word in words:
-                    if len(word) < 2:
-                        continue
-                    word = word.lower()
-                    if word not in word_counts.keys():
-                        word_counts[word] = 0
-                    word_counts[word] += 1
-        qualifying_words = [word for word in word_counts.keys() if word_counts[word] >= minimum_word_frequency]
-        qualifying_word_counts = {word: word_counts[word] for word in qualifying_words}
-        return qualifying_words, qualifying_word_counts
 
-    def pmi(self, word, text, unique_words_count, qualifying_word_counts, sentiment_word_count, qualifying_sentiment_word_counts): 
-        '''Pointwise mutual information'''
-        if word not in qualifying_sentiment_word_counts.keys():
-            return None
-        return np.log((qualifying_sentiment_word_counts[word] * unique_words_count)/(qualifying_word_counts[word] * sentiment_word_count))
+    def clean_review(self, review, negation=False, split=False):
+        review = review.replace('\n', ' ')
+        review = review.replace('-', ' ')
+        review = review.replace('+', ' ')
+        review = review.replace('(', ' ')
+        review = review.replace(')', ' ')
+        if negation:
+            review = review.replace('!', ' ! ')
+            review = review.replace('?', ' ? ')
+            review = review.replace('.', ' . ')
+            review = review.replace(',', ' , ')
+            review = review.replace(':', ' : ')
+            review = review.replace(';', ' ; ')
+        else:
+            review = review.replace('!', ' ')
+            review = review.replace('?', ' ')
+            review = review.replace('.', ' ')
+            review = review.replace(',', ' ')
+            review = review.replace(':', ' ')
+            review = review.replace(';', ' ')
+        review = review.strip().lower()
+        if split:
+            review = review.split()
+        return review
 
-    def semantic_orientation_score(self, positive_text, negative_text, qualifying_words, qualifying_word_counts, qualifying_positive_words, qualifying_positive_word_counts, qualifying_negative_words, qualifying_negative_word_counts):
-        '''Semantic orientation score'''
+
+    def clean_reviews(self, reviews, negation=False, split=False):
+        cleaned_reviews = []
+        for i in range(len(reviews)):         
+            cleaned_reviews.append(self.clean_review(reviews[i], negation=negation, split=split))
+        return cleaned_reviews
+
+
+    def count_unique(self, words):
+        unique = set(words[0])
+        if len(words) > 1:
+            for i in range(1, len(words)):
+                unique.update(words[i])
+        return len(unique)
+
+
+    def count(self, word, reviews):
+        count = 0
+        for review in reviews:
+            count += review.count(word)
+        return count
+
+
+    def get_so(self, word, pos_reviews, neg_reviews):
+        w_in_neg = self.count(word, neg_reviews) + 1
+        w_in_pos = self.count(word, pos_reviews) + 1
+
+        denominator = w_in_neg * self.count_unique(pos_reviews)
+        nominator =  w_in_pos * self.count_unique(neg_reviews)
+        fraction = nominator / denominator
+        score = np.log2(fraction)
+        return score
+
+
+    def get_negated_so(self, i, words, pos_reviews, neg_reviews):
+        punctuations = [",", ".", ":", ";", "!", "?"]
+        score = 0
+        for j in range(i, len(words)):
+            if words[j] in punctuations:
+                break
+            score += self.get_so(words[j], pos_reviews, neg_reviews)
+        return score
+
+
+    def get_unique_words(self, reviews, minimum_word_frequency):
+        length = len(reviews)
+        words = []
+        unique_words = set()
+        for i, review in enumerate(reviews):
+            self.print_status(i, length, 'Searching unique words')
+            for word in review:
+                unique_words.add(word)
+        print()
+        print('        -Done')
+        length = len(unique_words)
+        selected_words = []
+        for i, word in enumerate(unique_words):
+            self.print_status(i, length, 'Counting occurances')
+            if self.count(word, reviews) >= minimum_word_frequency:
+                selected_words.append(word)
+        return selected_words
+
+
+    def get_negated_scores(self, reviews, minimum_word_frequency, pos_reviews, neg_reviews):
+        negations = ["ei", "mutta"]
+        unique_words, scores = [], []
+        length = len(reviews)
+
+        self.print_status(None, None, 'Preparing data: 0%', percentage=False)
+        words = self.clean_reviews(reviews, negation=False, split=True)
+        self.print_status(None, None, 'Preparing data: 20%', percentage=False)
+        qualified_words = self.get_unique_words(words, minimum_word_frequency)
+        self.print_status(None, None, 'Preparing data: 40%', percentage=False)
+        reviews = self.clean_reviews(reviews, negation=True, split=True)
+        self.print_status(None, None, 'Preparing data: 60%', percentage=False)
+        pos_reviews = self.clean_reviews(pos_reviews, negation=False, split=False)
+        self.print_status(None, None, 'Preparing data: 80%', percentage=False)
+        neg_reviews = self.clean_reviews(neg_reviews, negation=False, split=False)
+        self.print_status(None, None, 'Preparing data: 100%', percentage=False)
+        print()
+        print('        -Done')
+        for i, review in enumerate(reviews):
+            self.print_status(i, length, 'Calculating semantic orientation scores')
+            score = 0
+            for j, word in enumerate(review):
+                if word not in qualified_words or word in unique_words:
+                    continue
+                if word in negations:
+                    score = self.get_negated_so(j, review, pos_reviews, neg_reviews)
+                else:
+                    score = self.get_so(word, pos_reviews, neg_reviews)
+                unique_words.append(word)
+                scores.append(score)
+        return unique_words, scores
+
+
+    def get_scores(self, reviews, minimum_word_frequency, pos_reviews, neg_reviews):
+        negations = ["ei", "mutta"]
         scores = []
-        unique_words_count = len(qualifying_words)
-        positive_word_count = len(qualifying_positive_words)
-        negative_word_count = len(qualifying_negative_words)
-        for word in qualifying_words:
-            positive_pmi = self.pmi(word, positive_text, unique_words_count, qualifying_word_counts, positive_word_count, qualifying_positive_word_counts)
-            negative_pmi = self.pmi(word, negative_text, unique_words_count, qualifying_word_counts, negative_word_count, qualifying_negative_word_counts)
-            if positive_pmi == None or negative_pmi == None:
-                scores.append('undefined')
-                continue
-            score = positive_pmi - negative_pmi
+
+        self.print_status(None, None, 'Preparing data: 0%', percentage=False)
+        pos_reviews = self.clean_reviews(pos_reviews, negation=False, split=True)
+        self.print_status(None, None, 'Preparing data: 33%', percentage=False)
+        neg_reviews = self.clean_reviews(neg_reviews, negation=False, split=True)
+        self.print_status(None, None, 'Preparing data: 66%', percentage=False)
+        words = self.clean_reviews(reviews, negation=False, split=True)
+        self.print_status(None, None, 'Preparing data: 100%', percentage=False)
+        print()
+        print('        -Done')
+        unique_words = self.get_unique_words(words, minimum_word_frequency)
+        length = len(unique_words)
+        print()
+        print('        -Done')
+        for i, word in enumerate(unique_words):
+            self.print_status(i, length, 'Calculating semantic orientation scores')
+            score = self.get_so(word, pos_reviews, neg_reviews)
             scores.append(score)
-        return scores
+        return unique_words, scores
 
-    def get_sentiment_lexicons(self, data, minimum_word_frequency, positive_rating_limit, negative_rating_limit):
-        print('        Separeting words...')
-        qualifying_words, qualifying_word_counts = self.get_words(data.iloc[:, 0], minimum_word_frequency)
+
+    def get_sentiment_lexicon(self, data, minimum_word_frequency, positive_rating_limit, negative_rating_limit, detect_negation):    
+        data.iloc[:, 0] = data.iloc[:, 0].apply(str)
+
+        pos_rev, _, neg_rev = self.classify_text(data, positive_rating_limit, negative_rating_limit)
+        print()
         print('        -Done')
 
-        print('        Classifying reviews...')
-        positive_text, neutral_text, negative_text = self.classify_text(data, positive_rating_limit, negative_rating_limit)
+        words, scores = [], []
+        if detect_negation:
+            words, scores = self.get_negated_scores(data.iloc[:, 0], minimum_word_frequency, pos_rev, neg_rev)
+        else:
+            words, scores = self.get_scores(data.iloc[:, 0], minimum_word_frequency, pos_rev, neg_rev)
+        print()
         print('        -Done')
-        
-        print('        Separeting positive and negative words...')
-        qualifyin_positive_words, qualifying_positive_word_counts = self.get_words(positive_text, 1)
-        qualifying_negative_words, qualifying_negative_word_counts = self.get_words(negative_text, 1)
-        print('        -Done')
+        return words, scores
 
-        print('        Calculating semantic orientation scores...')
-        scores = self.semantic_orientation_score(positive_text, negative_text, qualifying_words, qualifying_word_counts, qualifyin_positive_words, qualifying_positive_word_counts, qualifying_negative_words, qualifying_negative_word_counts)
-        print('        -Done')
-        
-        return qualifying_words, scores
-
-
-#######################################################################################################################
-
-
-#######################################################################################################################
-#sc.py
 
 class SentimentClassifier():
-    def __init__(self, words, lexicon):
+    def __init__(self, words, scores):
         self.words = words
-        self.lexicon = lexicon
+        self.scores = scores
 
-    def get_words(self, text):
-        results = []
-        text = text.replace('!', '.')
-        text = text.replace('?', '.')
-        text = text.replace('\n', '.')
-        text = text.replace('-', '.')
-        text = text.replace(',', '.')
-        sentences = text.split('.')
-        for sentence in sentences:
-            words = sentence.split(' ')
-            for word in words:
-                results.append(word.lower())
-        return results
-
-    def classify(self, text):
-        input_words = self.get_words(text)
-        print("words are here")
-        score = 0
-        for word in input_words:
-            if word in self.words:
-                lexicon_score = self.lexicon[input_words.index(word)]
-                if lexicon_score != 'undefined':
-                    score += lexicon_score
-        if score > 0:
-            return 'Positive'
-        elif score < 0:
-            return 'Negative'
-        return 'Neutral'
-
-#######################################################################################################################
+    def classify(self, texts, slc):
+        texts = slc.clean_reviews(texts, negation=False, split=True)
+        sentiments = []
+        for text in texts:
+            score = 0
+            for word in text:
+                if word in self.words:
+                    score += self.scores[self.words.index(word)]
+            if score > 0:
+                sentiments.append('Positive')
+            elif score < 0:
+                sentiments.append('Negative')
+            else: 
+                sentiments.append('Neutral')
+        return texts, sentiments
 
 
 def parse_file_name(file_name):
@@ -137,120 +218,81 @@ def parse_file_name(file_name):
         return file_name
     return file_name + '.csv'
 
-def help():
-    print('')
-    print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
-    print('+    Example:')
-    print('+    Restaurant reviews with a rating range of 0 to 10')
-    print('+    Example CSV file:')
-    print('+                         ')
-    print('+    | Reviews | Ratings |')
-    print('+    +-------------------+')
-    print('+    | "Test"  |    7    |')
-    print('+    | "Test 2"|    3    |')
-    print('+    | "Test 3"|    10   |')
-    print('+    +-------------------+')
-    print('+                         ')
-    print("+    CSV file's name (with extension): example_file.csv")
-    print('+    Minimum word frequency in the given corpus: 5')
-    print("+    Rating is positive if it's larger than: 5")
-    print("+    Rating is negative if it's smaller than: 5")
-    print('+    Reading file...')
-    print('+    Creating sentiment lexicon...')
-    print('+    -----------------------')
-    print('+    Sentiment lexicon done')
-    print('+    -----------------------')
-    print('+    File name for the created lexicon (without extension): sentiment_lexicon')
-    print('+    File "sentiment_lexicon.csv" has been saved to "./current/directory/"')
-    print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
-    print('')
-
 
 def main():
-    print('')
-    print('')
-    print('#############################')
-    print('------------Lexi------------')
-    print(' Sentiment lexicon creator  ')
-    print('            and             ')
-    print('         classifier         ')
-    print('#############################')
-    print('')
-    print('')
-    print('The given file should be in CSV file format.')
-    print('It also should have atleast two columns.')
-    print("The first column should have all the text that's")
-    print('going to be analyzed, and the second column should')
-    print("have all the ratings for the given text's.")
-    print('Type "help" for an example.')
-    print('')
+    print()
+    print()
+    print('#' * 80)
+    print('-' * 38 + 'Lexi' + '-' * 38)
+    print(' ' * 27 + 'Sentiment lexicon creator')
+    print(' ' * 38 + 'and')
+    print(' ' * 35 + 'classifier')
+    print('#' * 80)
+    print()
+    print()
+    print()
 
     current_directory = os.getcwd()
     current_directory = current_directory[:len(current_directory) - 9]
-    file_path = None
-    minimum_word_frequency = None
-    positive_rating_limit = None
-    negative_rating_limit = None
+    file_name = input("CSV file's name: ")
+    file_name = parse_file_name(file_name)
+    file_path = current_directory + file_name
+    minimum_word_frequency = input('Minimum word frequency in the given corpus: ').strip().lower()
+    positive_rating_limit = input("Rating is positive if it's larger than: ").strip().lower()
+    negative_rating_limit = input("Rating is negative if it's smaller than: ").strip().lower()
+    detect_negation = input("Use negation detection when calculating sentiment orientation score? [y/n]: ").strip().lower()
+    if detect_negation == 'y':
+        detect_negation = True
+    else:
+        detect_negation = False
 
-    run = True
-    while run:
-        file_name = input("CSV file's name: ")
-        file_name = parse_file_name(file_name)
-        file_path = current_directory + file_name
-        if file_name.strip().lower() == 'help':
-            help()
-            continue
-        minimum_word_frequency = input('Minimum word frequency in the given corpus: ')
-        if minimum_word_frequency.strip().lower() == 'help':
-            help()
-            continue
-        positive_rating_limit = input("Rating is positive if it's larger than: ")
-        if positive_rating_limit.strip().lower() == 'help':
-            help()
-            continue
-        negative_rating_limit = input("Rating is negative if it's smaller than: ")
-        if negative_rating_limit.strip().lower() == 'help':
-            help()
-            continue
-
-        run = False
-
-    print('')
+    print()
     print('Reading file...')
     data = pd.read_csv(file_path)
+    print('-Done')
 
-    print('')
+    print()
     print('Creating sentiment lexicon...')
     slc = SentimentLexiconCreator()
-    words, lexicons = slc.get_sentiment_lexicons(data, int(minimum_word_frequency), int(positive_rating_limit), int(negative_rating_limit))
-
-    print('-----------------------')
+    words, scores = slc.get_sentiment_lexicon(data, int(minimum_word_frequency), int(positive_rating_limit), int(negative_rating_limit), detect_negation)
+    print('-' * 80)
     print('Sentiment lexicon done')
-    print('-----------------------')
+    print('-' * 80)
 
-    classify_or_not = input('Do you want to classify texts after creating the lexicon? [y/n]: ').strip().lower()
-    #classify_or_not = 'n'
+    classify_or_not = input('Do you want to use classification? [y/n]: ').strip().lower()
     if classify_or_not == 'y':
-        text = None
-        run = True
-        while run:
-            text = input('Text to be classified: ').strip().lower()
-            if text == 'help':
-                help()
-                continue
-            run = False
-        sc = SentimentClassifier(words, lexicons)
-        sentiment = sc.classify(text)
-        print('Sentiment:', sentiment)
+        sc = SentimentClassifier(words, scores)
+        file_name = input("Classification file's name: ")
+        file_name = parse_file_name(file_name)
+        file_path = current_directory + file_name
 
+        print()
+        print('Reading file...')
+        data = pd.read_csv(file_path)
+        print('-Done')
+
+        print()
+        print('Classifying...')
+        texts = data.iloc[:, 0].apply(str)
+        texts, sentiments = sc.classify(texts, slc)
+        print('-Done')
+        
+        print()
+        file_name = input('File name for classification results: ')
+        file_name = parse_file_name(file_name)
+        results = pd.DataFrame({'data': texts, 'sentiment': sentiments})
+        results.to_csv(current_directory + file_name, index=False)
+        print(f'File "{file_name}" has been saved to "{current_directory}"')
+
+    print()
     save_or_not = input('Do you want to save the created lexicon? [y/n]: ').strip().lower()
     if save_or_not == 'y':    
         file_name = input('File name for the created lexicon: ')
         file_name = parse_file_name(file_name)
-        output = pd.DataFrame({'word': words, 'score': lexicons})
+        output = pd.DataFrame({'word': words, 'score': scores})
         output.to_csv(current_directory + file_name, index=False)
         print(f'File "{file_name}" has been saved to "{current_directory}"')
-        return
+    return
 
 
 if __name__ == '__main__':

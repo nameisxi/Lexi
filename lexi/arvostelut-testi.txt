@@ -1,0 +1,23 @@
+"Hyvä asiakaspalvelu. Hyvä sijainti. Huoneiden kalusteet alkaa olemaan aika vanhoja kuin myös kylpyhuone.
+Sänkyihin, tyynyihin ja täkkeihin on panostettu. Oikein miellyttävä nukkua.
+Aamiainen aika normaali hoteliaamiainen, lisättynä kokin toiveiden mukaan tekemillä munakkailla ja vohveleilla",40
+
+
+
+"Sijanniltaan paras keskustassa. Helppo tulla julkisilla tai autolla. Tyylikäs ja rauhallinen hotelli. Business-class edullinen suhteessa saatuun lisäarvoon; huoneet tilavat ja hyvin varustellut, netti toimii hyvin.",
+
+"Hyvä hotelli hyvällä sijainnilla. Pysäköinti plussaa kun auto sai olla koko päivän samaan hintaan. Maittava aamupala, gluteenittomat otettu hyvin huomioon. Siisti tilava hotellihuone ja hyvät sängyt..",
+
+
+"Epäsiisti ulkoa ja kerroskäyttävien osalta, tapetit kupruilee yms. Valtaosakalusteista ovat vanhoja ja kuluneita. Ei vastinetta rahoille. Selkeästi ylihinnoiteltu. Sijainti on hyvä mutta niin haastepaikalla oleva tasoketjun hotellin on panostettava lay-outiin myös. Ei tee mieli tulla uudestaan.",
+
+
+"Henkilökunta oli hotellissa erittäin ammattitaitoista ja palvelu oli ystävällistä. Aamupala on todella hyvää ja monipuolista sekä riittoisaa. Yhteistyö kuntosalin kanssa saanee osaltaan minut tulemaan uudestaan hotelliinne. "
+
+
+"Sijanniltaan paras keskustassa. Helppo tulla julkisilla tai autolla. Tyylikäs ja rauhallinen hotelli. Business-class edullinen suhteessa saatuun lisäarvoon; huoneet tilavat ja hyvin varustellut, netti toimii hyvin.",40
+"Hyvä hotelli hyvällä sijainnilla. Pysäköinti plussaa kun auto sai olla koko päivän samaan hintaan. Maittava aamupala, gluteenittomat otettu hyvin huomioon. Siisti tilava hotellihuone ja hyvät sängyt..",50
+"Epäsiisti ulkoa ja kerroskäyttävien osalta, tapetit kupruilee yms. Valtaosakalusteista ovat vanhoja ja kuluneita. Ei vastinetta rahoille. Selkeästi ylihinnoiteltu. Sijainti on hyvä mutta niin haastepaikalla oleva tasoketjun hotellin on panostettava lay-outiin myös. Ei tee mieli tulla uudestaan.",20
+"Henkilökunta oli hotellissa erittäin ammattitaitoista ja palvelu oli ystävällistä. Aamupala on todella hyvää ja monipuolista sekä riittoisaa. Yhteistyö kuntosalin kanssa saanee osaltaan minut tulemaan uudestaan hotelliinne. 
+
+",40
