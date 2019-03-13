@@ -31,7 +31,7 @@ For example:
 
 5. Give Lexi the negative rating threshold (= rating that is smaller than the given value is considered negative).
 
-6. Tell Lexi to use, or not to use negation detection (using negation detection usually boost the accuracy little bit).
+6. Tell Lexi to use, or not to use negation detection (using negation detection usually boosts the accuracy a little bit).
 
 7. Tell Lexi to classify, or not to classify documents based on your generated lexicon. If you decide to classify documents, Lexi will prompt you to give a to be classified file's name and it also expects it to be found in the same directory to which you cloned Lexi to. After the classification process, Lexi's going to ask a filename for the classification results.
 
