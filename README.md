@@ -38,3 +38,20 @@ For example:
 8. Tell Lexi to save, or not to save the created lexicon. If you decide to save the lexicon, Lexi's going to prompt you for a filename.
 
 9. If everything went fine, and you decided to save your lexicon and/or classification results, the relevant files should be located in the directory where you clone Lexi to.
+
+Example lexicon from the previous "data":
+
+| word | score |
+| --------- | ----------- |
+| this | -0.3219280948873623 |
+| example | -0.3219280948873623 |
+| also | 0.6780719051126377 |
+| an | -0.3219280948873623 |
+| is | -0.3219280948873623 |
+
+Example classification results from the previous "data":
+
+| data | sentiment |
+| --------- | ----------- |
+| This is an example | Negative |
+| This also is an example | Positive |
