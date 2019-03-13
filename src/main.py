@@ -7,6 +7,7 @@ from docutils.parsers.rst.directives import percentage
 
 class SentimentLexiconCreator:
     def print_status(self, i, length, string, percentage=True):
+        ''' This is art. '''
         if percentage:
             output_string = f'        {string}: {int(((i + 1) / length) * 100)}%'
         else:
@@ -196,9 +197,9 @@ class SentimentClassifier():
         self.scores = scores
 
     def classify(self, texts, slc):
-        texts = slc.clean_reviews(texts, negation=False, split=True)
+        texts_cleaned = slc.clean_reviews(texts, negation=False, split=True)
         sentiments = []
-        for text in texts:
+        for text in texts_cleaned:
             score = 0
             for word in text:
                 if word in self.words:
@@ -233,13 +234,19 @@ def main():
     print()
 
     current_directory = os.getcwd()
-    current_directory = current_directory[:len(current_directory) - 9]
+    current_directory = current_directory[:len(current_directory) - 8]
     file_name = input("CSV file's name: ")
     file_name = parse_file_name(file_name)
     file_path = current_directory + file_name
     minimum_word_frequency = input('Minimum word frequency in the given corpus: ').strip().lower()
+    if minimum_word_frequency == '':
+        minimum_word_frequency = 5
     positive_rating_limit = input("Rating is positive if it's larger than: ").strip().lower()
+    if positive_rating_limit == '':
+        positive_rating_limit = 3
     negative_rating_limit = input("Rating is negative if it's smaller than: ").strip().lower()
+    if negative_rating_limit == '':
+        negative_rating_limit = 3
     detect_negation = input("Use negation detection when calculating sentiment orientation score? [y/n]: ").strip().lower()
     if detect_negation == 'y':
         detect_negation = True
@@ -255,6 +262,7 @@ def main():
     print('Creating sentiment lexicon...')
     slc = SentimentLexiconCreator()
     words, scores = slc.get_sentiment_lexicon(data, int(minimum_word_frequency), int(positive_rating_limit), int(negative_rating_limit), detect_negation)
+    #sentiments = ['positive' if score > 0 'negative' if score < 0 else 'neutral' for score in scores if score]
     print('-' * 80)
     print('Sentiment lexicon done')
     print('-' * 80)
@@ -262,9 +270,11 @@ def main():
     classify_or_not = input('Do you want to use classification? [y/n]: ').strip().lower()
     if classify_or_not == 'y':
         sc = SentimentClassifier(words, scores)
-        file_name = input("Classification file's name: ")
-        file_name = parse_file_name(file_name)
-        file_path = current_directory + file_name
+        classification_file_name = input("Classification file's name: ")
+        classification_file_name = parse_file_name(classification_file_name)
+        if classification_file_name == '':
+            classification_file_name = file_name
+        file_path = current_directory + classification_file_name
 
         print()
         print('Reading file...')
