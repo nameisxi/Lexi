@@ -35,6 +35,8 @@ class SentimentLexiconCreator:
         review = review.replace('+', ' ')
         review = review.replace('(', ' ')
         review = review.replace(')', ' ')
+        review = review.replace('"', ' ')
+        review = review.replace("'", ' ')
         if negation:
             review = review.replace('!', ' ! ')
             review = review.replace('?', ' ? ')
