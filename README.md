@@ -55,3 +55,18 @@ Example classification results from the previous "data":
 | --------- | ----------- |
 | This is an example | Negative |
 | This also is an example | Positive |
+
+## How to cite:
+
+If you wish to use the data/code in your research, please cite the following:
+
+```
+@inproceedings{vankka2019sentiment,
+  title={Sentiment Analysis of Finnish Customer Reviews},
+  author={Vankka, Jouko and Myllykoski, Heikki and Peltonen, Tuomas and Riippa, Ken},
+  booktitle={2019 Sixth International Conference on Social Networks Analysis, Management and Security (SNAMS)},
+  pages={344--350},
+  year={2019},
+  organization={IEEE}
+}
+```
